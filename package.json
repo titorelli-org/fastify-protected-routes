@@ -1,0 +1,35 @@
+{
+  "name": "@titorelli-org/fastify-protected-routes",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "keywords": [
+    "fastify",
+    "authentication",
+    "Titorelli"
+  ],
+  "author": "YChebotaev <yury@chebotaev.ru>",
+  "license": "AGPL-3.0-only",
+  "description": "Fastify plugin to protect routes with oauth protected resources",
+  "devDependencies": {
+    "@types/node": "^24.0.1",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@fastify/error": "^4.2.0",
+    "@fastify/middie": "^9.0.3",
+    "fastify": "^5.4.0",
+    "fastify-plugin": "^5.0.1",
+    "find-my-way": "^9.3.0",
+    "pino": "^9.7.0"
+  }
+}
