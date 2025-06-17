@@ -1,20 +1,10 @@
 import type { Logger } from "pino";
-import {
-  FastifyError,
-  FastifyInstance,
-  FastifyReply,
-  FastifyRequest,
-  RouteOptions,
-} from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import createError from "@fastify/error";
-import type {
-  ProtectedRoutesPluginOptions,
-  RouteConfigProtected,
-} from "./types";
+import type { ProtectedRoutesPluginOptions } from "./types";
+import { RouteConfig } from "./RouteConfig";
 
 export class ProtectedRoutesPlugin {
-  private readonly resourceMetadataSymbol = Symbol("resource-metadata");
-  private readonly protectedResourceSymbol = Symbol("protected-resource");
   private readonly UnauthorizedError = createError(
     "UNAUTHORIZED",
     "Unauthorized",
@@ -22,9 +12,11 @@ export class ProtectedRoutesPlugin {
   );
   private readonly origin: string;
   private readonly authorizationServers: string[];
-  private readonly allRoutesRequireAuthorization: boolean;
   private readonly checkTokenImpl: (token: string) => Promise<boolean>;
   private readonly logger: Logger;
+
+  public readonly resourceMetadataSymbol = Symbol("resource-metadata");
+  public readonly allRoutesRequireAuthorization: boolean;
 
   constructor(
     private readonly fastify: FastifyInstance,
@@ -38,29 +30,31 @@ export class ProtectedRoutesPlugin {
   ) {
     this.origin = origin;
     this.authorizationServers = authorizationServers;
-    this.allRoutesRequireAuthorization = allRoutesRequireAuthorization;
+    this.allRoutesRequireAuthorization = allRoutesRequireAuthorization ?? false;
     this.logger = logger;
     this.checkTokenImpl = checkToken;
+
     this.initialize();
   }
 
   private initialize() {
     this.fastify.addHook("onRoute", (routeOptions) => {
-      if (this.shouldSkipRoute(routeOptions)) return;
+      const routeConfig = new RouteConfig(this, routeOptions);
 
-      this.installPreValidationHook(routeOptions);
+      if (routeConfig.shouldSkipRoute()) return;
+
+      routeConfig.installPreValidationHook(this.authValidator);
 
       try {
         this.fastify.get(
-          this.getResourceMetadataPath(routeOptions.path),
+          routeConfig.getResourceMetadataPath(),
           {
             config: { [this.resourceMetadataSymbol]: true },
           },
           async (request, reply) => {
             reply.headers({ "content-type": "application/json" });
 
-            const resolvedPathname = this.interpolateResourcePath(
-              routeOptions.path,
+            const resolvedPathname = routeConfig.interpolateResourcePath(
               request.params,
             );
 
@@ -79,35 +73,6 @@ export class ProtectedRoutesPlugin {
         }
       }
     });
-  }
-
-  private interpolateResourcePath(
-    routePath: string,
-    params: Record<string, any>,
-  ) {
-    let resolvedPathname = routePath;
-
-    for (const [key, val] of Object.entries(params)) {
-      const re = new RegExp(`\\:${key}`, "gi");
-
-      resolvedPathname = resolvedPathname.replace(re, String(val));
-    }
-
-    return resolvedPathname;
-  }
-
-  private installPreValidationHook(routeOptions: RouteOptions) {
-    let preValidation = routeOptions.preValidation;
-
-    if (preValidation == null) {
-      preValidation = [this.authValidator];
-    } else if (typeof preValidation === "function") {
-      preValidation = [this.authValidator, preValidation];
-    } else if (Array.isArray(preValidation)) {
-      preValidation.unshift(this.authValidator);
-    }
-
-    routeOptions.preValidation = preValidation;
   }
 
   private authValidator = async (
@@ -155,88 +120,5 @@ export class ProtectedRoutesPlugin {
     }
 
     return resourceMetadataUrl.toString();
-  }
-
-  private getResourceMetadataPath(routePath: string) {
-    return `/.well-known/oauth-protected-resource${
-      routePath === "/" ? "" : routePath
-    }`;
-  }
-
-  private shouldSkipRoute(routeOptions: RouteOptions) {
-    return [
-      this.shouldSkipRouteBecauseOfMethod,
-      this.shouldSkipRouteBecauseItsResourceMetadata,
-      this.shouldSkipRouteBecauseAuthorizationNotRequired,
-    ].some((fn) => fn(routeOptions));
-  }
-
-  private shouldSkipRouteBecauseOfMethod = ({ method }: RouteOptions) => {
-    switch (method) {
-      case "HEAD":
-      case "OPTIONS":
-        return true;
-      default:
-        return false;
-    }
-  };
-
-  private shouldSkipRouteBecauseItsResourceMetadata = ({
-    config,
-  }: RouteOptions) => {
-    if (config) {
-      const skip = Reflect.get(config, this.resourceMetadataSymbol);
-
-      if (skip) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  private shouldSkipRouteBecauseAuthorizationNotRequired = (
-    routeOptions: RouteOptions,
-  ) => {
-    const requireAuthorization =
-      this.getRouteRequireAuthorization(routeOptions);
-
-    return !requireAuthorization;
-  };
-
-  private getRouteRequireAuthorization(routeOptions: RouteOptions) {
-    if (this.allRoutesRequireAuthorization) {
-      return true;
-    }
-
-    const { enabled } = this.getRouteProtectedConfig(routeOptions);
-
-    return enabled;
-  }
-
-  private getRouteProtectedConfig({
-    config,
-  }: RouteOptions): RouteConfigProtected {
-    if (config) {
-      const protectedConfig = Reflect.get(config, "protected") as
-        | RouteConfigProtected
-        | boolean;
-
-      if (typeof protectedConfig === "boolean") {
-        return {
-          enabled: protectedConfig,
-        };
-      }
-
-      return (
-        protectedConfig ?? {
-          enabled: false,
-        }
-      );
-    }
-
-    return {
-      enabled: false,
-    };
   }
 }
