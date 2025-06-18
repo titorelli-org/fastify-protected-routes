@@ -57,6 +57,16 @@ export class RouteConfig {
     return resolvedPathname;
   }
 
+  public getSupportedScopes() {
+    const { scopesSupported } = this.getRouteProtectedConfig();
+
+    if (!scopesSupported) {
+      return [];
+    }
+
+    return scopesSupported;
+  }
+
   private get resourceMetadataSymbol() {
     return this.plugin.resourceMetadataSymbol;
   }

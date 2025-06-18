@@ -10,4 +10,5 @@ export type ProtectedRoutesPluginOptions = {
 
 export type RouteConfigProtected = {
   enabled: boolean;
+  scopesSupported?: string[];
 };

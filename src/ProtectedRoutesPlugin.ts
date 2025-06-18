@@ -61,6 +61,7 @@ export class ProtectedRoutesPlugin {
             return {
               resource: `${this.origin}${resolvedPathname}`,
               authorization_servers: this.authorizationServers,
+              scopes_supported: routeConfig.getSupportedScopes(),
               bearer_methods_supported: ["body"],
             };
           },
