@@ -5,7 +5,7 @@ export type ProtectedRoutesPluginOptions = {
   authorizationServers: string[];
   allRoutesRequireAuthorization?: boolean;
   logger: Logger;
-  checkToken(token: string): Promise<boolean>;
+  checkToken(token: string, url: string, supportedScopes: string[]): Promise<boolean>;
 };
 
 export type RouteConfigProtected = {

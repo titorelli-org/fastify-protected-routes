@@ -18,18 +18,19 @@ export class RouteConfig {
 
   public installPreValidationHook(
     authValidator: (
+        routeConfig: RouteConfig,
       request: FastifyRequest<any>,
-      reply: FastifyReply,
+      reply: FastifyReply
     ) => Promise<void>,
   ) {
     let preValidation = this.routeOptions.preValidation;
 
     if (preValidation == null) {
-      preValidation = [authValidator];
+      preValidation = [authValidator.bind(this, this)];
     } else if (typeof preValidation === "function") {
-      preValidation = [authValidator, preValidation];
+      preValidation = [authValidator.bind(this, this), preValidation];
     } else if (Array.isArray(preValidation)) {
-      preValidation.unshift(authValidator);
+      preValidation.unshift(authValidator.bind(this, this));
     }
 
     this.routeOptions.preValidation = preValidation;
@@ -132,13 +133,11 @@ export class RouteConfig {
   }
 
   private getRouteProtectedConfig(): RouteConfigProtected {
-    const { config } = this.routeOptions;
-
-    if (config) {
-      const protectedConfig = Reflect.get(config, "protected") as
-        | undefined
-        | RouteConfigProtected
-        | boolean;
+      const protectedConfig = Reflect.get(this.routeOptions, 'protected') as
+          | RouteConfigProtected
+          | boolean
+          | null
+          | undefined;
 
       if (protectedConfig == null) {
         return { enabled: false };
@@ -152,9 +151,4 @@ export class RouteConfig {
 
       return protectedConfig;
     }
-
-    return {
-      enabled: false,
-    };
-  }
 }

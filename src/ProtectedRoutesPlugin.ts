@@ -12,7 +12,7 @@ export class ProtectedRoutesPlugin {
   );
   private readonly origin: string;
   private readonly authorizationServers: string[];
-  private readonly checkTokenImpl: (token: string) => Promise<boolean>;
+  private readonly checkTokenImpl: (token: string, url: string, supportedScopes: string[]) => Promise<boolean>;
   private readonly logger: Logger;
 
   public readonly resourceMetadataSymbol = Symbol("resource-metadata");
@@ -77,6 +77,7 @@ export class ProtectedRoutesPlugin {
   }
 
   private authValidator = async (
+      routeConfig: RouteConfig,
     request: FastifyRequest<any>,
     reply: FastifyReply,
   ) => {
@@ -84,7 +85,7 @@ export class ProtectedRoutesPlugin {
     const token = authorizationHeaderValue.startsWith("Bearer")
       ? authorizationHeaderValue.slice(7)
       : null;
-    const valid = await this.checkToken(token);
+    const valid = await this.checkToken(token, request.url, routeConfig.getSupportedScopes());
 
     if (!valid) {
       reply.headers({
@@ -97,11 +98,11 @@ export class ProtectedRoutesPlugin {
     }
   };
 
-  private async checkToken(token: string | null) {
+  private async checkToken(token: string | null, url: string, supportedScopes: string[]) {
     if (token == null) return false;
 
     try {
-      return this.checkTokenImpl(token);
+      return this.checkTokenImpl(token, url, supportedScopes);
     } catch (err) {
       this.logger.error(err);
 
