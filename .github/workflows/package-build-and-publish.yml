@@ -17,6 +17,8 @@ jobs:
         uses: actions/setup-node@v4.1.0
         with:
           node-version: 20.18.1
+      - name: Login to ghcr
+        run: "npm set '//npm.pkg.github.com/:_authToken=${{secrets.GITHUB_TOKEN}}'"
       - name: Npm install
         run: npm install
       - name: Npm build
