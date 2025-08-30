@@ -1,5 +1,5 @@
 import fastify from "fastify";
-import { protectedRoutes } from "./index";
+import { protectedRoutes, TokenValidator } from "./index";
 import pino from "pino";
 
 const app = fastify();
@@ -11,6 +11,7 @@ app
     allRoutesRequireAuthorization: true,
     logger: pino(),
     checkToken(token, url, supportedScopes) {
+
         console.log({token, url, supportedScopes});
 
       return Promise.resolve(true);

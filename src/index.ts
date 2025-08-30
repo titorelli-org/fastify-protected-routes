@@ -1,10 +1,11 @@
 import { fastifyPlugin } from "fastify-plugin";
 import { ProtectedRoutesPlugin } from "./ProtectedRoutesPlugin";
 import type { ProtectedRoutesPluginOptions } from "./types";
+export * from './TokenValidator'
 
 export const protectedRoutes = fastifyPlugin<ProtectedRoutesPluginOptions>(
   (fastify, options) => {
-    new ProtectedRoutesPlugin(fastify, options);
+      new ProtectedRoutesPlugin(fastify, options);
   },
   {
     name: "@titorelli-org/fastify-protected-routes",
