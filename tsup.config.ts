@@ -6,7 +6,5 @@ export default defineConfig({
   dts: true,
   splitting: false,
   sourcemap: true,
-  clean: true,
-  target: "esnext",
-  platform: "node",
+  clean: true
 });

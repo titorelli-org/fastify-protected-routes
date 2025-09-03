@@ -1,9 +1,8 @@
 {
   "name": "@titorelli-org/fastify-protected-routes",
   "version": "0.6.1",
-  "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
