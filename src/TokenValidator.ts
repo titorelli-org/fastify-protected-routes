@@ -1,12 +1,6 @@
 import { Logger } from "pino";
 import type { JwksStore } from "@titorelli-org/jwks-store";
 import { everyAsync } from "./everyAsync";
-import {
-  compactDecrypt,
-  compactVerify,
-  decodeJwt,
-  decodeProtectedHeader,
-} from "jose";
 import { someAsync } from "./someAsync";
 
 export class TokenValidator {
@@ -56,6 +50,8 @@ export class TokenValidator {
   }
 
   private async parseToken(tokenStr: string) {
+    const { compactVerify, decodeJwt, decodeProtectedHeader } = await import("jose");
+
     const protectedHeader = decodeProtectedHeader(tokenStr);
 
     function stripPrivate(jwk) {
